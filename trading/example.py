@@ -1,42 +1,17 @@
-import tushare as ts
-from datetime import datetime, timedelta
-
-from high_frequency_trader import HighFrequencyTrader
-from high_frequency_strategy import HighFrequencyStrategy
+from trader import AStockTrader
+from strategy import MAStrategy
+from backtest import Backtest
+from trading import settings
 
 # 初始化
-token = "24798a6230858ac2880a52dc5ea8e446a3fe531a3bdec6a5377c800c"
-ts.set_token(token)
-pro = ts.pro_api()
+token = settings.Constant.TUSHARE_TOKEN # 需要在tushare网站注册获取
+trader = AStockTrader(token)
+strategy = MAStrategy(short_window=5, long_window=20)
+backtest = Backtest(trader, strategy)
 
-# 创建策略和交易器实例
-strategy = HighFrequencyStrategy()
-trader = HighFrequencyTrader(initial_capital=50000)
-
-# 获取分钟级别数据
-def get_minute_data(code, start_date, end_date):
-    df = ts.pro_bar(ts_code=code, 
-                    freq='1min',  # 1分钟K线
-                    start_date=start_date,
-                    end_date=end_date)
-    return df
-
-# 运行策略
+# 运行回测
 code = "000001.SZ"  # 平安银行
-start_date = (datetime.now() - timedelta(days=1)).strftime("%Y%m%d")
-end_date = datetime.now().strftime("%Y%m%d")
+backtest.run(code, "20230101", "20231231")
 
-# 获取数据并执行策略
-df = get_minute_data(code, start_date, end_date)
-signals_df = strategy.generate_signals(df)
-
-# 模拟交易
-for index, row in signals_df.iterrows():
-    trader.execute_trade(row['signal'], 
-                        row['close'], 
-                        row['volume'], 
-                        row['trade_time'])
-
-# 查看交易结果
-print(f"最终资金: {trader.capital}")
-print(f"交易次数: {len(trader.trade_history)}") 
+# 查看交易历史
+print(backtest.trade_history)

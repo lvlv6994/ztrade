@@ -1,3 +1,3 @@
 all:
 	# ./helloworld.py
-	bin/python example.py
+	bin/python trading/stock_selector_example.py
